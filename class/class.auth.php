@@ -77,77 +77,106 @@ class auth
 	public function check_auth($para_uname,$para_pword)
 	{
 		$response = array();
-		
+		echo $response["status"] = FALSE;
+		//echo " Jp";
+		//exit;
 	try{	
 	
 		$para_uname = $para_uname;
 		$para_pword = $para_pword;
 		
-		//$this->log_text="Class Auth : Login Attempt for ".$para_uname; $this->writelog("c_log",$this->log_text);
+		$this->log_text="Class Auth : Login Attempt for ".$para_uname; $this->writelog("c_log",$this->log_text);
 		
 		//$query_stmt = "select u.*,s.site_name , ar.role_name , ar.role_hierarchy,ar.role_id from app_users u left outer join site s on u.default_site_id = s.site_id ";
-		$query_stmt = "select u.*,s.facility_name , ar.role_name , ar.role_hierarchy,ar.role_id from app_users u left outer join location s 
-		on u.default_site_id = s.loc_id ";
+		$query_stmt = "select u.*,s.facility_name , ar.role_name , ar.role_hierarchy,ar.role_id from app_users u left outer join location s on u.default_site_id = s.loc_id ";
+
+		
+
 		$query_stmt = trim($query_stmt) . " left outer join app_role ar on u.approle_id = role_id ";
 		$query_stmt = trim($query_stmt) . " where (u.emp_id='".$para_uname."' or u.ad_id='".$para_uname."' or ";
 		$query_stmt = trim($query_stmt) . " u.ldap_id='".$para_uname."' or u.email_id='".$para_uname."' ) ";
 		$query_stmt = trim($query_stmt) . " and   1=1 ";
-      	$exec_stmt = $this->runQuery($query_stmt);
+      $exec_stmt = $this->runQuery($query_stmt);
       //$exec_stmt->bindParam('bind_uname', $para_uname, PDO::PARAM_STR);
       //$exec_stmt->bindValue('bind_pword', $para_pword, PDO::PARAM_STR);
-		$exec_stmt->execute();
-		$count = $exec_stmt->rowCount();
-		$row   = $exec_stmt->fetch(PDO::FETCH_ASSOC);
+      $exec_stmt->execute();
+      $count = $exec_stmt->rowCount();
+      $row   = $exec_stmt->fetch(PDO::FETCH_ASSOC);
 
-    	
+      $response["message"] = "Login Valid";
 
-    if($count == 1 && !empty($row)) 
+      /*if($count == 1 && !empty($row)) 
 	  {
 			
-			
-			if (password_verify($para_pword, $row['pword']))	
+			if ($row['isactive'] == 0 )
 			{
-				// $this->log_text="Class Auth : Auth Success ".$para_uname; $this->writelog("c_log",$this->log_text);
-				// $this->writelog("c_log",implode('*',$row));
-				// $_SESSION['star']['sess_user_key']   = $row['user_key'];
-				// $_SESSION['star']['sess_user_fname'] = $row['fname'];
-				// $_SESSION['star']['sess_user_lname'] = $row['lname'];
-				// $_SESSION['star']['sess_user_site_id'] = $row['default_site_id'];
-				// //$_SESSION['star']['sess_user_lang_id'] = $row['default_lang_id'];
-				// //$_SESSION['star']['sess_user_site_ids'] = $row['site_ids'];
-				// $_SESSION['star']['sess_user_type'] = $row['user_type'];
-				// $_SESSION['star']['sess_user_site_name'] = $row['facility_name'];
-				// $_SESSION['star']['sess_timeout'] = time();
+				$this->log_text="Class Auth : Not Active user ".$para_uname; $this->writelog("c_log",$this->log_text);
+				$response["status"] = FALSE;
+				$response["message"] = "Account is Not Active , Contact Admin";
+				$response["action"] = "";
+				$response["navigateto"]="/main/default.php";
+			}
+			else if ( $row['pword_locked'] == 1 )
+			{
+				$this->log_text="Class Auth : Password Locked ".$para_uname; $this->writelog("c_log",$this->log_text);
+				$response["status"] = FALSE;
+				$response["message"] = "Your Account is Locked , Contact Admin";
+				$response["action"] = "";
+				$response["navigateto"]="/main/default.php";
+			}
+			else if (password_verify($para_pword, $row['pword']))	
+			{
+				$this->log_text="Class Auth : Auth Success ".$para_uname; $this->writelog("c_log",$this->log_text);
+				$this->writelog("c_log",implode('*',$row));
+				$_SESSION['star']['sess_user_key']   = $row['user_key'];
+				$_SESSION['star']['sess_user_fname'] = $row['fname'];
+				$_SESSION['star']['sess_user_lname'] = $row['lname'];
+				$_SESSION['star']['sess_user_site_id'] = $row['default_site_id'];
+				//$_SESSION['star']['sess_user_lang_id'] = $row['default_lang_id'];
+				//$_SESSION['star']['sess_user_site_ids'] = $row['site_ids'];
+				$_SESSION['star']['sess_user_type'] = $row['user_type'];
+				$_SESSION['star']['sess_user_site_name'] = $row['facility_name'];
+				$_SESSION['star']['sess_timeout'] = time();
 
-				// $_SESSION['star']['sess_default_lang'] = $row['default_lang_id'];
-				// $_SESSION['star']['sess_default_site'] = $row['default_site_id'];
-				// $_SESSION['star']['sess_current_site'] = $row['default_site_id'];
-				// $_SESSION['star']['sess_allowed_site'] = $row['site_ids'];
+				$_SESSION['star']['sess_default_lang'] = $row['default_lang_id'];
+				$_SESSION['star']['sess_default_site'] = $row['default_site_id'];
+				$_SESSION['star']['sess_current_site'] = $row['default_site_id'];
+				$_SESSION['star']['sess_allowed_site'] = $row['site_ids'];
 
-				// $_SESSION['star']['sess_approle_id'] = $row['approle_id'];
-				// $_SESSION['star']['sess_approle_name'] = $row['role_name'];
-				// $_SESSION['star']['sess_approle_hierarchy'] = $row['role_hierarchy'];
+				$_SESSION['star']['sess_approle_id'] = $row['approle_id'];
+				$_SESSION['star']['sess_approle_name'] = $row['role_name'];
+				$_SESSION['star']['sess_approle_hierarchy'] = $row['role_hierarchy'];
 				
-				// $this->create_permissions_json($row['approle_id'],$row['user_key']);
+				$this->create_permissions_json($row['approle_id'],$row['user_key']);
 				
-				// $_SESSION['star']['sess_change_pword'] = $row['change_pword'];
-				// $_SESSION['star']['lock_screen'] = 0;
-				// starapptoken::create_token($row['user_key']); 
-				// $this->login_history($row['user_key']);
-				// $this->add_user_availability($row['user_key']);
-				// $response["status"] = TRUE;
-				// $response["message"] = "Login Valid";
-				// $response["outout"] = $_SESSION['star'];
-				// $response["change_pword"] = $row['change_pword'];
-
-					$_SESSION['loc_id']=1;
-					$_SESSION['role_id']=1;
-					$response["status"] = TRUE;
+				$_SESSION['star']['sess_change_pword'] = $row['change_pword'];
+				$_SESSION['star']['lock_screen'] = 0;
+				starapptoken::create_token($row['user_key']); 
+				$this->login_history($row['user_key']);
+				$this->add_user_availability($row['user_key']);
+				$response["status"] = TRUE;
 				$response["message"] = "Login Valid";
-				$response["outout"] = 1;
-				$response["change_pword"] = 0;
-				$response["navigateto"]="./sel_loc.php";
-				
+				$response["outout"] = $_SESSION['star'];
+				$response["change_pword"] = $row['change_pword'];
+
+				if($row['role_hierarchy']==50)
+				{
+					$response["navigateto"]="./operations/pallet_tracking.php";
+				}
+				else if($row['role_hierarchy']==51 or $row['role_hierarchy']==52 or $row['role_hierarchy']==54
+				|| $row['role_hierarchy']==55 or $row['role_hierarchy']==56 or $row['role_hierarchy']==57
+				)
+				{
+					$response["navigateto"]="./mytasks/mytasks.php";
+				}
+				else if($row['role_hierarchy']==53)
+				{
+					$response["navigateto"]="./mytasks/receivertask.php";
+				}
+				else
+				{
+					$response["navigateto"]="./main/default.php";
+				}
 				//$response["active"] = $row['isactive'];
 				
 				//unset($_SESSION['star'];
@@ -157,7 +186,7 @@ class auth
 			}
 			else
 			{
-				//$this->log_text="Class Auth : Auth Failed".$para_uname; $this->writelog("c_log",$this->log_text);
+				$this->log_text="Class Auth : Auth Failed".$para_uname; $this->writelog("c_log",$this->log_text);
 				$response["status"] = FALSE;
 				$response["message"] = "InValid Password";
 				//$response["active"] = $row['isactive'];
@@ -170,7 +199,7 @@ class auth
 		$response["message"] = "Login InValid";
 		$response["action"] = "";
 		
-	   }
+	   }*/
 	   
 	}
        // Catch any errors
@@ -183,7 +212,7 @@ class auth
 	}
 	
 	
-	/*public function unlock_password($user_key,$lockscreen_pp)
+	public function unlock_password($user_key,$lockscreen_pp)
 	{
 		$response = array();
 		$response["status"] = FALSE;
@@ -215,11 +244,11 @@ class auth
 			}
 
 	  return json_encode($response); 
-	}*/
+	}
 	
 	
 	
-	/*public function create_permissions_json($role_id,$user_key)
+	public function create_permissions_json($role_id,$user_key)
 	{
 		$query_stmt = "select appmodule_id,access_view,access_insert,access_edit,access_delete from app_role_module 
 		where approle_id = $role_id  and isactive = 1 and block_status = 0 and  1=1 ";
@@ -237,10 +266,10 @@ class auth
 		}	 
 		file_put_contents($_SESSION['star']['sess_rights'],  json_encode($output) );
 		return true;
-	}*/
+	}
 	
 	
-	/*public function reset_password($user_key,$reset_old,$reset_new,$reset_newretype)
+	public function reset_password($user_key,$reset_old,$reset_new,$reset_newretype)
 	{
 		$date_val = date('Y-m-d H:i:s');		
 		$response = array();
@@ -284,10 +313,10 @@ class auth
 		}
 	
 	}
-	*/
 	
 	
-	/*public function logout_history()
+	
+	public function logout_history()
 	{
 
 		if (  isset($_SESSION['star']['sess_user_key']) &&  isset($_SESSION['star']['sess_his_id']) )
@@ -311,9 +340,9 @@ class auth
 		}	 
 			
 	}	
-	*/
+	
 
-	/*public function login_history($user_key)
+	public function login_history($user_key)
 	{
 		$uniq_session_id = session_id();
 		$date = date('Y-m-d H:i:s');
@@ -329,9 +358,8 @@ class auth
 			$_SESSION['star']['sess_his_id']=$this->conn->lastInsertId();
 
 			
-	}	*/
-	
-	/*public function add_user_availability($user_key,$logoutflag=0)
+	}	
+	public function add_user_availability($user_key,$logoutflag=0)
 	{
 		$date = date('Y-m-d H:i:s');
 		$stat=1;
@@ -360,7 +388,7 @@ class auth
 			$query_stmt->execute();
 			$output = $query_stmt->fetch(PDO::FETCH_ASSOC);
 		}
-	}*/
+	}
 	
 	public function getUserIP()
 	{
@@ -384,7 +412,7 @@ class auth
 		return $ip;
 	}
 	
- /*public function writelog($logtype,$logtext)
+ public function writelog($logtype,$logtext)
 	{
 		try 
 		{
@@ -395,7 +423,7 @@ class auth
 		}
 		catch(Exception $e) { 	}
 	}
-	*/	
+		
  
 }	
 ?>
